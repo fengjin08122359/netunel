@@ -1,0 +1,21 @@
+{
+  "name": "dsh-netunel",
+  "version": "0.1.0",
+  "description": "自研科学上网代理框架：本地 HTTP/SOCKS5 代理 + 自研加密隧道协议 + Web 控制面板（客户端 + 服务端）",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "netunel": "bin/netunel.js"
+  },
+  "scripts": {
+    "start": "node bin/netunel.js",
+    "client": "node bin/netunel.js client",
+    "server": "node bin/netunel.js server",
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {}
+}

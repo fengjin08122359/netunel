@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Netunel · 自研代理面板</title>
+<style>
+  :root{--bg:#0f1420;--card:#171e2e;--line:#26304a;--fg:#e6ecf5;--muted:#8b98b5;--acc:#4f8cff;--ok:#38d9a9;--err:#ff6b6b;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--fg)}
+  .wrap{max-width:860px;margin:0 auto;padding:24px 18px 80px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+  header .logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#4f8cff,#7b5bff);display:flex;align-items:center;justify-content:center;font-weight:800}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--muted);font-size:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .pill{padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600}
+  .pill.idle{background:#222b42;color:var(--muted)}
+  .pill.client{background:rgba(56,217,169,.15);color:var(--ok);border:1px solid rgba(56,217,169,.4)}
+  .pill.server{background:rgba(79,140,255,.15);color:var(--acc);border:1px solid rgba(79,140,255,.4)}
+  .pill.err{background:rgba(255,107,107,.15);color:var(--err)}
+  button{background:#24304d;border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px}
+  button:hover{background:#2e3c60}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.primary:hover{background:#3d78e6}
+  button.danger{background:rgba(255,107,107,.15);border-color:rgba(255,107,107,.4);color:var(--err)}
+  input,textarea,select{background:#0f1626;border:1px solid var(--line);color:var(--fg);border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
+  label{font-size:12px;color:var(--muted);display:block;margin:8px 0 4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .stat{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .stat b{color:var(--fg)}
+  .node{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+  .node.active{border-color:var(--acc);background:rgba(79,140,255,.06)}
+  .node .nm{font-weight:600}
+  .node .meta{color:var(--muted);font-size:12px}
+  .tag{display:inline-block;background:#222b42;border-radius:4px;padding:1px 6px;font-size:11px;margin-left:6px;color:var(--muted)}
+  .hint{color:var(--muted);font-size:12px;line-height:1.6}
+  .flex{display:flex;gap:8px}
+  .muted{color:var(--muted)}
+  h2{font-size:15px;margin:0 0 12px}
+  .errline{color:var(--err);font-size:12px;margin-top:8px}
+  .okline{color:var(--ok);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">N</div>
+    <div>
+      <h1>Netunel 控制面板</h1>
+      <div class="sub">自研 NTP 加密隧道 · HTTP/SOCKS5 本地代理 · Web 面板</div>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="row">
+      <div><span id="modePill" class="pill idle">未运行</span></div>
+      <div class="flex">
+        <button id="btnConnect" class="primary">启动客户端</button>
+        <button id="btnDisconnect">断开</button>
+      </div>
+    </div>
+    <div id="statusLine" class="hint" style="margin-top:10px"></div>
+    <div id="errLine" class="errline"></div>
+  </div>
+
+  <div class="card">
+    <h2>节点管理</h2>
+    <div id="nodeList"></div>
+    <div class="flex" style="margin-top:8px">
+      <button id="btnAddNode" class="primary">+ 添加 NTP 节点</button>
+      <button id="btnAddByUrl">+ 粘贴节点/订阅</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>订阅导入</h2>
+    <label>订阅 URL（v2ray/sub 格式，可解析 ntp/vmess/vless/trojan/ss）</label>
+    <div class="flex">
+      <input id="subUrl" placeholder="https://example.com/sub">
+      <button id="btnFetchSub">导入</button>
+    </div>
+    <div id="subLine" class="hint" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>服务端模式（运行在你的 VPS 上）</h2>
+    <div class="grid">
+      <div><label>监听地址</label><input id="srvHost" value="0.0.0.0"></div>
+      <div><label>端口</label><input id="srvPort" value="9443" type="number"></div>
+    </div>
+    <label>密码（与客户端一致）</label>
+    <input id="srvPwd" placeholder="设置强密码">
+    <div class="flex" style="margin-top:10px">
+      <button id="btnSrvStart" class="primary">启动服务端</button>
+      <button id="btnSrvStop">停止</button>
+    </div>
+    <div id="srvLine" class="hint" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card">
+    <h2>运行状态</h2>
+    <div id="statsBox"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

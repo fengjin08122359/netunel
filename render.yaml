@@ -1,0 +1,15 @@
+# Render Blueprint (免费 web service, 会休眠; 适合测试, 常驻代理建议用 Fly.io/Oracle)
+services:
+  - type: web
+    name: netunel
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NETUNEL_HOST
+        value: 0.0.0.0
+      - key: NETUNEL_PORT
+        value: "9443"
+      - key: NETUNEL_PASSWORD
+        sync: false   # 首次部署后在 Dashboard 里设置
+    healthCheckPath: /

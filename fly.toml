@@ -1,0 +1,24 @@
+# Fly.io 部署配置 (免费额度可跑小型 TCP 应用, 适合自研 NTP 服务端)
+# 用法:
+#   fly launch --no-deploy
+#   fly secrets set NETUNEL_PASSWORD=你的强密码
+#   fly deploy
+app = "netunel"
+primary_region = "nrt"   # 东京; 可按需改 sin/hkg/maa 等
+
+[build]
+
+[env]
+  NETUNEL_HOST = "0.0.0.0"
+
+# NTP 是裸 TCP 长连接, 用 tcp services 暴露 9443
+[[services]]
+  internal_port = 9443
+  protocol = "tcp"
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 500
+  [[services.ports]]
+    port = 9443
+    handlers = []
